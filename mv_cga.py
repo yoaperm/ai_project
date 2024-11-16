@@ -1,4 +1,4 @@
-import numpy as np
+import random
 
 
 class MultiValuedCompactGeneticAlgorithm:
@@ -30,15 +30,19 @@ class MultiValuedCompactGeneticAlgorithm:
         self.learning_rate = (
             learning_rate if learning_rate is not None else 1 / population_size
         )
-        self.probability_matrix = np.full(
-            (chromosome_length, num_values), 1 / num_values
-        )
+
+        # Initialize the probability matrix with equal probabilities for each gene and value
+        self.probability_matrix = [
+            [1 / num_values] * num_values for _ in range(chromosome_length)
+        ]
 
     def generate_chromosome(self):
         """Generate a chromosome based on the probability matrix."""
         chromosome = []
         for i in range(self.chromosome_length):
-            value = np.random.choice(self.num_values, p=self.probability_matrix[i])
+            value = random.choices(
+                range(self.num_values), weights=self.probability_matrix[i]
+            )[0]
             chromosome.append(value)
         return chromosome
 
@@ -47,13 +51,18 @@ class MultiValuedCompactGeneticAlgorithm:
         for i in range(self.chromosome_length):
             if winner[i] != loser[i]:
                 # Decrease probability for the loser's value
-                self.probability_matrix[i, loser[i]] -= self.learning_rate
+                self.probability_matrix[i][loser[i]] -= self.learning_rate
                 # Increase probability for the winner's value
-                self.probability_matrix[i, winner[i]] += self.learning_rate
+                self.probability_matrix[i][winner[i]] += self.learning_rate
 
                 # Ensure probabilities stay within bounds [0, 1] and re-normalize
-                self.probability_matrix[i] = np.clip(self.probability_matrix[i], 0, 1)
-                self.probability_matrix[i] /= self.probability_matrix[i].sum()
+                self.probability_matrix[i] = [
+                    max(0, min(1, p)) for p in self.probability_matrix[i]
+                ]
+                total = sum(self.probability_matrix[i])
+                self.probability_matrix[i] = [
+                    p / total for p in self.probability_matrix[i]
+                ]
 
     def run(self):
         """Run the MV-cGA for the specified number of generations."""
@@ -102,7 +111,8 @@ if __name__ == "__main__":
         fitness_function,
         learning_rate,
     )
-    print("Initial probability vector:", mv_cga.probability_matrix)
+
+    print("Initial probability matrix:", mv_cga.probability_matrix)
     best_chromosome, probability_matrix = mv_cga.run()
 
     print("Best chromosome found:", best_chromosome, sum(best_chromosome))
