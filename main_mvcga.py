@@ -90,9 +90,16 @@ mv_cga = MultiValuedCompactGeneticAlgorithm(
     fitness,
     learning_rate,
 )
+
+sample_chromosome = mv_cga.generate_chromosome()
+print("Before running the MV-cGA:")
+print("Sample chromosome:", sample_chromosome)
+print("Sample fitness:", fitness(sample_chromosome))
+
 print("Initial provability matrix:", mv_cga.probability_matrix)
 best_chromosome, probability_matrix = mv_cga.run()
 
 # Decode and display the best chromosome
 best_schedule = [ACTIVITIES[gene] for gene in best_chromosome]
 print("Best schedule found:", best_schedule)
+print("Best fitness:", fitness(best_chromosome))
