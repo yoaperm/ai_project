@@ -8,25 +8,37 @@ DAYS = 7  # Number of days in the schedule
 TIME_SLOTS = 24  # Hours in a day
 WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-# Activity dictionary with priority levels
-activities = {
-    'sleep': 1,
-    'commute': 0,
-    'work': 4,
-    'study': 2,
-    'homework': 3,
-    'thesis': 5,
-    'exercise': 2,
-    'rest': 0
-}
+# Activities
+# activities = [
+#     'sleep',            # Sleeping
+#     'eat',              # Eating
+#     'personal_care',    # Personal care
+#     'commute',          # Commuting
+#     'work_home',        # Work from home
+#     'work_office',      # Work at office
+#     'class_online',     # Online class
+#     'class_university', # University class
+#     'thesis_homework',  # Thesis/Homework
+#     'rest',             # Resting
+#     'exercise',         # Exercising
+#     'socializing',      # Socializing
+#     'leisure',          # Leisure activities
+# ]
 
-# Define time constraints
-sleep_hours = list(range(22, 24)) + list(range(0, 6))  # Sleep from 22:00 to 06:00
-work_hours = list(range(9, 18))  # Work from 09:00 to 18:00
-commute_hours_morning = [8]  # Commute to work at 08:00 - 09:00
-commute_hours_evening = [18]  # Commute from work at 18:00 - 19:00
+# Measure time and space for Standard GA
+tracemalloc.start()
+start_time = time.time()
 
-# Define office days and remote days
+# Define mandatory hours
+work_hours = 8
+class_hours = 6
+sleep_min_hours = 6
+
+# Time constraints
+sleep_time = list(range(22, 24)) + list(range(0, 6))  # Preferred sleep time
+meal_times = [7, 12, 18]  # Breakfast, Lunch, Dinner
+
+# Office days and remote days
 office_days = ['Tue', 'Thu']
 remote_days = ['Mon', 'Wed', 'Fri']
 
@@ -35,81 +47,174 @@ def create_chromosome():
     chromosome = []
     for day_index in range(DAYS):
         day = WEEKDAYS[day_index % 7]
-        daily_schedule = []
+        daily_schedule = [''] * TIME_SLOTS
+
+        # Initialize with sleep during preferred sleep time
+        for hour in sleep_time:
+            daily_schedule[hour] = 'sleep'
+
+        # Schedule personal care (e.g., showering) once per day
         for hour in range(TIME_SLOTS):
-            if hour in sleep_hours:
-                daily_schedule.append('sleep')
-            elif hour in commute_hours_morning and day in office_days:
-                daily_schedule.append('commute')
-            elif hour in commute_hours_evening and day in office_days:
-                daily_schedule.append('commute')
-            elif hour in work_hours:
-                daily_schedule.append('work')
+            if daily_schedule[hour] == '':
+                daily_schedule[hour] = 'personal_care'
+                break
+
+        # Schedule meals at meal times
+        for hour in meal_times:
+            if daily_schedule[hour] == '':
+                daily_schedule[hour] = 'eat'
             else:
-                # Available activities during free time
-                possible_activities = ['study', 'homework', 'thesis', 'exercise', 'rest']
-                activity = random.choice(possible_activities)
-                daily_schedule.append(activity)
+                # Find the next available slot
+                for h in range(TIME_SLOTS):
+                    if daily_schedule[h] == '':
+                        daily_schedule[h] = 'eat'
+                        break
+
+        # Schedule mandatory activities
+        if day in remote_days:
+            # Work from home
+            work_count = 0
+            for hour in range(TIME_SLOTS):
+                if daily_schedule[hour] == '' and work_count < work_hours:
+                    daily_schedule[hour] = 'work_home'
+                    work_count += 1
+        elif day in office_days:
+            # Commute and work at office
+            commute_hours = 2  # Total commute time per day
+            commute_count = 0
+            work_count = 0
+            for hour in range(TIME_SLOTS):
+                if daily_schedule[hour] == '' and commute_count < 1:
+                    daily_schedule[hour] = 'commute'
+                    commute_count += 1
+                elif daily_schedule[hour] == '' and work_count < work_hours:
+                    daily_schedule[hour] = 'work_office'
+                    work_count += 1
+                elif daily_schedule[hour] == '' and commute_count < 2:
+                    daily_schedule[hour] = 'commute'
+                    commute_count += 1
+        elif day == 'Sat':
+            # Online class
+            class_count = 0
+            for hour in range(TIME_SLOTS):
+                if daily_schedule[hour] == '' and class_count < class_hours:
+                    daily_schedule[hour] = 'class_online'
+                    class_count += 1
+        elif day == 'Sun':
+            # Commute and class at university
+            commute_hours = 2  # Total commute time
+            commute_count = 0
+            class_count = 0
+            for hour in range(TIME_SLOTS):
+                if daily_schedule[hour] == '' and commute_count < 1:
+                    daily_schedule[hour] = 'commute'
+                    commute_count += 1
+                elif daily_schedule[hour] == '' and class_count < class_hours:
+                    daily_schedule[hour] = 'class_university'
+                    class_count += 1
+                elif daily_schedule[hour] == '' and commute_count < 2:
+                    daily_schedule[hour] = 'commute'
+                    commute_count += 1
+
+        # Fill the rest of the day with optional activities
+        for hour in range(TIME_SLOTS):
+            if daily_schedule[hour] == '':
+                optional_activities = [
+                    'thesis_homework',
+                    'rest',
+                    'exercise',
+                    'socializing',
+                    'leisure',
+                    'sleep'  # Additional sleep if needed
+                ]
+                daily_schedule[hour] = random.choice(optional_activities)
+
         chromosome.extend(daily_schedule)
     return chromosome
 
-# Fitness function
+# Fitness function with penalties
 def fitness(chromosome):
     score = 0
+    total_work_hours_week = 0
+    total_sleep_hours_week = 0
+    did_beneficial_activities = False
+
     for day_index in range(DAYS):
         day = WEEKDAYS[day_index % 7]
         daily_schedule = chromosome[day_index * TIME_SLOTS: (day_index + 1) * TIME_SLOTS]
-        
+
         # Count activities
         sleep_hours_count = daily_schedule.count('sleep')
-        work_hours_count = daily_schedule.count('work')
-        thesis_hours = daily_schedule.count('thesis')
+        work_home_hours = daily_schedule.count('work_home')
+        work_office_hours = daily_schedule.count('work_office')
+        work_hours_count = work_home_hours + work_office_hours
+        class_online_hours = daily_schedule.count('class_online')
+        class_university_hours = daily_schedule.count('class_university')
+        class_hours_count = class_online_hours + class_university_hours
+        eat_count = daily_schedule.count('eat')
         exercise_hours = daily_schedule.count('exercise')
-        study_hours = daily_schedule.count('study')
-        
-        # Sleep evaluation
-        if sleep_hours_count >= 7:
-            score += 10
+        rest_hours = daily_schedule.count('rest')
+        thesis_hours = daily_schedule.count('thesis_homework')
+
+        total_work_hours_week += work_hours_count
+        total_sleep_hours_week += sleep_hours_count
+
+        # Penalties and rewards
+        # 1. Work hours
+        if day in remote_days + office_days:
+            if work_hours_count < 8:
+                score -= 1000 * (8 - work_hours_count)
+            if work_hours_count == 0:
+                score -= float('inf')  # Dead individual
+            if day in office_days:
+                commute_count = daily_schedule.count('commute')
+                if commute_count < 2:
+                    score -= 500 * (2 - commute_count)
+
+        # 2. Class hours
+        if day in ['Sat', 'Sun']:
+            if class_hours_count < 6:
+                score -= 100 * (6 - class_hours_count)
+            if day == 'Sun':
+                commute_count = daily_schedule.count('commute')
+                if commute_count < 2:
+                    score -= 50 * (2 - commute_count)
+
+        # 3. Sleep hours
+        if sleep_hours_count < sleep_min_hours:
+            score -= 100 * (sleep_min_hours - sleep_hours_count)
+
+        # 4. Eating
+        if eat_count < 3:
+            score -= 50 * (3 - eat_count)
+
+        # 5. Beneficial activities
+        if exercise_hours > 0 or rest_hours > 0:
+            did_beneficial_activities = True
+            score += 10 * (exercise_hours + rest_hours)
         else:
-            score -= 10  # Penalty for insufficient sleep
-        
-        # Work hours evaluation
-        if work_hours_count != len(work_hours):
-            score -= abs(work_hours_count - len(work_hours)) * 5  # Penalty for incorrect work hours
-        
-        # Avoid hard study on office days
-        if day in office_days:
-            hard_study_hours = daily_schedule.count('study')
-            score -= 5 * hard_study_hours  # Penalty
-        
-        # Thesis work reward
-        score += thesis_hours * 4
-        
-        # Exercise reward
-        score += exercise_hours * 2
-        
-        # Penalty for activities during sleep hours
-        for hour in sleep_hours:
-            activity = daily_schedule[hour]
-            if activity != 'sleep':
-                score -= 5  # Penalty for not sleeping during sleep hours
-        
-        # Penalty for activities during work hours
-        for hour in work_hours:
-            activity = daily_schedule[hour]
-            if activity not in ['work', 'commute']:
-                score -= 5  # Penalty for non-work activities during work hours
-        
-        # Ensure total hours are 24
-        if len(daily_schedule) != TIME_SLOTS:
-            score -= 50  # Heavy penalty for incorrect day length
-    
+            score -= 20  # Penalty for not doing beneficial activities
+
+        # 6. Personal care
+        if 'personal_care' not in daily_schedule:
+            score -= 30  # Penalty for skipping personal care
+
+    # Weekly penalties
+    if total_work_hours_week < 40:
+        score -= 1000 * (40 - total_work_hours_week)
+    if total_work_hours_week == 0:
+        score -= float('inf')  # Dead individual
+
+    # Total sleep hours in the week
+    if total_sleep_hours_week < sleep_min_hours * DAYS:
+        score -= 100 * (sleep_min_hours * DAYS - total_sleep_hours_week)
+
     return score
 
 # Genetic Algorithm parameters
 population_size = 100
-generations = 500
-mutation_rate = 0.5
+generations = 150
+mutation_rate = 0.1
 
 # Initial population
 population = [create_chromosome() for _ in range(population_size)]
@@ -128,39 +233,52 @@ print(f"Initial best fitness: {best_initial_fitness}")
 for gen in range(generations):
     # Evaluate fitness
     fitness_scores = [fitness(chrom) for chrom in population]
-    
-    # Selection
-    population = [chrom for _, chrom in sorted(zip(fitness_scores, population), reverse=True)]
-    
-    # Elitism
-    next_generation = population[:int(0.2 * population_size)]  # Keep top 20%
-    
+
+    # Selection (Tournament Selection)
+    selected_population = []
+    for _ in range(population_size):
+        contenders = random.sample(population, 3)
+        contender_fitness = [fitness(chrom) for chrom in contenders]
+        winner = contenders[contender_fitness.index(max(contender_fitness))]
+        selected_population.append(winner)
+
     # Crossover
+    next_generation = []
     while len(next_generation) < population_size:
-        parent1 = random.choice(population[:int(0.5 * population_size)])
-        parent2 = random.choice(population[:int(0.5 * population_size)])
-        cross_point = random.randint(1, len(parent1) - 2)
-        child1 = parent1[:cross_point] + parent2[cross_point:]
-        child2 = parent2[:cross_point] + parent1[cross_point:]
-        next_generation.extend([child1, child2])
-    
+        parent1 = random.choice(selected_population)
+        parent2 = random.choice(selected_population)
+        if parent1 != parent2:
+            cross_point = random.randint(1, len(parent1) - 2)
+            child1 = parent1[:cross_point] + parent2[cross_point:]
+            child2 = parent2[:cross_point] + parent1[cross_point:]
+            next_generation.extend([child1, child2])
+
     # Mutation
-    for individual in next_generation[int(0.2 * population_size):]:  # Skip elites
+    for individual in next_generation:
         if random.random() < mutation_rate:
             mutate_point = random.randint(0, len(individual) - 1)
-            day = mutate_point // TIME_SLOTS
+            day = WEEKDAYS[(mutate_point // TIME_SLOTS) % 7]
             hour = mutate_point % TIME_SLOTS
-            if hour in sleep_hours:
-                new_activity = 'sleep'
-            elif hour in commute_hours_morning + commute_hours_evening:
-                new_activity = 'commute'
-            elif hour in work_hours:
-                new_activity = 'work'
-            else:
-                possible_activities = ['study', 'homework', 'thesis', 'exercise', 'rest']
-                new_activity = random.choice(possible_activities)
-            individual[mutate_point] = new_activity
-    
+            # Apply mutation considering the constraints
+            if day in remote_days + office_days and individual[mutate_point] in ['work_home', 'work_office', 'commute']:
+                continue  # Do not mutate mandatory work hours
+            if day in ['Sat', 'Sun'] and individual[mutate_point] in ['class_online', 'class_university', 'commute']:
+                continue  # Do not mutate mandatory class hours
+            if individual[mutate_point] == 'sleep' and hour in sleep_time:
+                continue  # Do not mutate sleep during sleep time
+            # Otherwise, mutate to a random optional activity
+            optional_activities = [
+                'thesis_homework',
+                'rest',
+                'exercise',
+                'socializing',
+                'leisure',
+                'sleep',
+                'eat',
+                'personal_care'
+            ]
+            individual[mutate_point] = random.choice(optional_activities)
+
     population = next_generation[:population_size]
 
 # Evaluate final fitness scores
@@ -203,9 +321,6 @@ def group_hours_by_activity(df):
     grouped_df = df.groupby(['Day', 'Activity'])['Hours'].sum().reset_index()
     # Pivot the table to have activities as columns
     pivot_df = grouped_df.pivot(index='Day', columns='Activity', values='Hours').fillna(0)
-    # Reorder columns for consistency
-    activity_order = ['sleep', 'commute', 'work', 'exercise', 'thesis', 'study', 'homework', 'rest']
-    pivot_df = pivot_df.reindex(columns=activity_order, fill_value=0)
     return pivot_df
 
 # Group the hours for both schedules
@@ -223,19 +338,24 @@ def plot_stacked_bars(grouped_df, title):
     # Colors for activities
     activity_colors = {
         'sleep': 'lightblue',
+        'eat': 'orange',
+        'personal_care': 'pink',
         'commute': 'grey',
-        'work': 'orange',
+        'work_home': 'green',
+        'work_office': 'darkgreen',
+        'class_online': 'purple',
+        'class_university': 'indigo',  # Updated color
+        'thesis_homework': 'yellow',
+        'rest': 'lightgreen',
         'exercise': 'cyan',
-        'thesis': 'yellow',
-        'study': 'red',
-        'homework': 'pink',
-        'rest': 'lightgreen'
+        'socializing': 'red',
+        'leisure': 'gold'
     }
 
     colors = [activity_colors.get(activity, 'white') for activity in activities]
 
     # Plotting
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(12, 7))
 
     bottom = np.zeros(len(days))
 
@@ -256,3 +376,15 @@ plot_stacked_bars(initial_grouped, 'Initial Best Schedule - Daily Activity Alloc
 
 # Plot the best schedule after GA
 plot_stacked_bars(best_grouped, 'Best Schedule After GA - Daily Activity Allocation')
+
+
+
+
+
+end_time = time.time()
+current, peak = tracemalloc.get_traced_memory()
+tracemalloc.stop()
+
+print(f"Best fitness after GA: {best_fitness}")
+print(f"Time taken by Standard GA: {end_time - start_time:.2f} seconds")
+print(f"Memory usage by Standard GA: Current = {current / 10**6:.2f} MB; Peak = {peak / 10**6:.2f} MB")
