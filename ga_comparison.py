@@ -1,8 +1,13 @@
 import random
 import time
 
+import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
+
+# Initialize or load history
+if "history" not in st.session_state:
+    st.session_state.history = []
 
 
 # Fitness function
@@ -90,7 +95,6 @@ population_size = st.sidebar.slider("Population Size (GA)", 10, 1000, 100)
 generations = st.sidebar.slider("Generations (GA)", 10, 1000, 100)
 mutation_rate = st.sidebar.slider("Mutation Rate (GA)", 0.0, 1.0, 0.05, 0.01)
 
-
 # Run the algorithms
 if st.button("Run Comparison"):
     search_space = range(2**gene_length)
@@ -107,34 +111,64 @@ if st.button("Run Comparison"):
     )
     ga_time = time.time() - start_time
 
-    # Results
-    st.subheader("Results")
-
-    data = pd.DataFrame(
+    # Store current run results in history
+    st.session_state.history.append(
         {
-            "Algorithm": ["Brute-Force", "Genetic Algorithm"],
-            "Execution Time (s)": [bf_time, ga_time],
+            "Gene Length": gene_length,
+            "Population Size": population_size,
+            "Generations": generations,
+            "Mutation Rate": mutation_rate,
+            "Brute-Force Best Solution": bf_solution,
+            "Brute-Force Fitness": bf_fitness,
+            "Brute-Force Time (s)": bf_time,
+            "GA Best Solution": ga_solution,
+            "GA Fitness": ga_fitness,
+            "GA Time (s)": ga_time,
+            "Time Ratio (GA/BF)": ga_time / bf_time,
         }
     )
-    st.subheader("Execution Time Comparison")
-    st.bar_chart(data.set_index("Algorithm"))
-    st.write(data)
 
-    st.write("### Brute-Force Search")
-    st.write(f"Best Solution: {bf_solution}, Fitness: {bf_fitness}")
-    st.write(f"Execution Time: {bf_time:.4f} seconds")
+# Display results and history
+if st.session_state.history:
+    st.subheader("Current Run and History of Past Runs")
 
-    st.write("### Genetic Algorithm")
-    st.write(f"Best Solution: {ga_solution}, Fitness: {ga_fitness}")
-    st.write(f"Execution Time: {ga_time:.4f} seconds")
+    # Create DataFrame to display history
+    history_df = pd.DataFrame(st.session_state.history)
+    st.write(history_df)
 
-    # Comparison
-    st.subheader("Performance Comparison")
-    st.write(f"**Execution Time Ratio (GA/Brute-Force):** {ga_time/bf_time:.2f}")
-    st.write("**Efficiency:**")
-    if bf_fitness == ga_fitness:
-        st.success("Both algorithms found the optimal solution!")
-    elif bf_fitness > ga_fitness:
-        st.warning("Brute-Force found a better solution.")
-    else:
-        st.success("Genetic Algorithm outperformed Brute-Force.")
+    # Prepare data for matplotlib double bar chart
+    runs = range(1, len(st.session_state.history) + 1)
+    bf_times = history_df["Brute-Force Time (s)"]
+    ga_times = history_df["GA Time (s)"]
+
+    # Plotting with matplotlib
+    fig, ax = plt.subplots(figsize=(10, 6))
+    width = 0.35  # Width of the bars
+    ax.bar([r - width / 2 for r in runs], bf_times, width, label="Brute-Force")
+    ax.bar([r + width / 2 for r in runs], ga_times, width, label="Genetic Algorithm")
+
+    ax.set_xlabel("Run")
+    ax.set_ylabel("Execution Time (s)")
+    ax.set_title("Execution Time Comparison")
+    ax.set_xticks(runs)
+    ax.legend()
+
+    # Display matplotlib chart in Streamlit
+    st.pyplot(fig)
+
+    # Display detailed history for each run
+    st.write("**Run Details**:")
+    for i, run in enumerate(st.session_state.history, 1):
+        st.write(f"### Run {i}")
+        st.write(f"Gene Length: {run['Gene Length']}")
+        st.write(f"Population Size (GA): {run['Population Size']}")
+        st.write(f"Generations (GA): {run['Generations']}")
+        st.write(f"Mutation Rate (GA): {run['Mutation Rate']}")
+        st.write(
+            f"Brute-Force - Best Solution: {run['Brute-Force Best Solution']}, Fitness: {run['Brute-Force Fitness']}, Time: {run['Brute-Force Time (s)']:.4f} s"
+        )
+        st.write(
+            f"Genetic Algorithm - Best Solution: {run['GA Best Solution']}, Fitness: {run['GA Fitness']}, Time: {run['GA Time (s)']:.4f} s"
+        )
+        st.write(f"Time Ratio (GA/BF): {run['Time Ratio (GA/BF)']:.2f}")
+        st.write("---")
