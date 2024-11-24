@@ -6,8 +6,7 @@ This repository contains scripts, documentation, and notebooks for implementing 
 - [Project Overview](#project-overview)
 - [Weekly Scheduling](#weekly-scheduling)
 - [Daily Scheduling](#daily-scheduling)
-- [Genetic And Bruceforce Comparison](#genetic-bruceforce-comparison])
-- [Genetic And Compactgenetic Comparison](#genetic-compact-genetic-comparison])
+- [Time and Space Comparison](#time-space-comparison])
 
 ## Project Overview
 This project aims to explore different GA techniques, including traditional GA and compact GA, for optimizing scheduling problems, specifically a weekly timetable for a master's degree student. The goal is to compare their performance in terms of time consumption, space usage, and fitness improvement.
@@ -42,8 +41,20 @@ The script produces stacked bar charts that show how the student's time is alloc
 ## Daily Scheduling
 
 
-## Genetic And Bruceforce Comparison
+## Time And Space Comparison
 
+The purpose of the `time_space_comparison` folder is to compare the execution time and memory usage between different scheduling optimization techniques.
 
-## Genetic And Compactgenetic Comparison
+### Time Comparison: GA vs Brute Force
+- This comparison focuses on evaluating the execution time required to solve the scheduling problem using Genetic Algorithm (GA) versus a brute-force approach.
+- As the number of bits (i.e., complexity) increases, the brute-force method becomes significantly slower due to the exponential growth in possible solutions, whereas GA maintains better efficiency by intelligently searching the solution space.
+- The results demonstrate that GA is more efficient in terms of execution time, especially as the problem complexity grows, making it a preferable approach for larger scheduling problems.
+
+### Space Comparison: GA vs Compact Genetic Algorithm (cGA)
+- The comparison also includes memory usage between GA and Compact Genetic Algorithm (cGA).
+- cGA is designed to use less memory by representing the population probabilistically rather than maintaining an explicit population of individuals, making it suitable for environments with limited memory resources.
+- The comparison results show that cGA significantly reduces memory usage compared to the traditional GA while achieving comparable results in terms of optimization quality.
+
+### Folder Contents
+- All scripts, datasets, and results related to time and space comparisons are available in the `time_space_comparison` folder.
 
