@@ -6,8 +6,8 @@ This repository contains scripts, documentation, and notebooks for implementing 
 - [Project Overview](#project-overview)
 - [Weekly Scheduling](#weekly-scheduling)
 - [Daily Scheduling](#daily-scheduling)
-- [Genetic-BruceForce Comparison](#genetic-bruceforce-comparison])
-- [Genetic-CompactGenetic Comparison](#genetic-compactgenetic-comparison])
+- [Genetic And Bruceforce Comparison](#genetic-bruceforce-comparison])
+- [Genetic And Compactgenetic Comparison](#genetic-compact-genetic-comparison])
 
 ## Project Overview
 This project aims to explore different GA techniques, including traditional GA and compact GA, for optimizing scheduling problems, specifically a weekly timetable for a master's degree student. The goal is to compare their performance in terms of time consumption, space usage, and fitness improvement.
@@ -42,8 +42,8 @@ The script produces stacked bar charts that show how the student's time is alloc
 ## Daily Scheduling
 
 
-## Genetic-BruceForce Comparison
+## Genetic And Bruceforce Comparison
 
 
-## Genetic-CompactGenetic Comparison
+## Genetic And Compactgenetic Comparison
 
