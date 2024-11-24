@@ -4,48 +4,47 @@ This repository contains scripts, documentation, and notebooks for implementing 
 
 ## Table of Contents
 - [Project Overview](#project-overview)
-- [Weekly Scheduling](#weekly-scheduling)
-- [Daily Scheduling](#daily-scheduling)
-- [Time And Space Comparison](#time-and-space-comparison])
-- [Video Presenting](#video-presenting])
-- [Presentation](#presentation])
+- [Final Folder Structure](#final-folder-structure)
+- [Daily Genetic Algorithm](#daily-genetic-algorithm)
+- [Weekly Genetic Algorithm](#weekly-genetic-algorithm)
+- [Time Space Comparison](#time-space-comparison)
+- [Video Presenting](#video-presenting)
+- [Presentation](#presentation)
 
 ## Project Overview
 This project aims to explore different GA techniques, including traditional GA and compact GA, for optimizing scheduling problems, specifically a weekly timetable for a master's degree student. The goal is to compare their performance in terms of time consumption, space usage, and fitness improvement.
 
-## Weekly Scheduling
-The `weekly_genetic_algorithm.py` script in this project is designed to create an optimized weekly schedule for a master's degree student using a Genetic Algorithm (GA). The script schedules activities such as work, classes, sleep, exercise, and other daily routines to balance productivity, well-being, and personal time over a typical week.
+## Final Folder Structure
+The repository is structured into three main components, each focusing on a distinct aspect of scheduling optimization. This separation ensures clarity in understanding the different use cases and methodologies applied.
 
-### Key Features:
-- **Chromosome Structure**: Each chromosome represents a complete weekly schedule, consisting of genes for each hour of each day (7 days x 24 hours).
-- **Mandatory Activities**: The script schedules mandatory activities such as work, university classes, and sleep based on predefined requirements and constraints. For example, specific days are designated as work-from-home or office days, and sleep is scheduled during preferred hours.
-- **Fitness Function**: The fitness function evaluates how well a chromosome meets predefined requirements, such as achieving a certain number of work hours, sleep hours, and including beneficial activities like exercise. Penalties are applied for failing to meet these requirements, ensuring the schedule meets the student's needs.
-- **Genetic Operators**:
-  - **Selection**: Tournament selection is used to choose the best chromosomes for the next generation.
-  - **Crossover**: Parent chromosomes are combined to produce offspring, creating diversity in the population.
-  - **Mutation**: Random mutations are applied to introduce variations in the schedule while respecting the time constraints for mandatory activities.
-- **Visualization**: The script generates visualizations of the schedules using stacked bar charts, allowing a comparison between the initial best schedule and the optimized schedule after running the GA.
+### Final/
+- **Time_Space_Comparison/**
+  - `readme.md`: Documentation explaining the purpose of time and space comparisons.
+  - `requirement.text`: Dependencies required to run the scripts in this folder.
+  - Python file(s): Scripts to execute time and space comparison experiments.
 
-### Workflow:
-1. **Initialization**: A population of random chromosomes is generated, each representing a potential weekly schedule.
-2. **Fitness Evaluation**: Each chromosome is evaluated using a fitness function, with scores reflecting how well it balances various tasks and personal needs.
-3. **GA Loop**: Over multiple generations, chromosomes are selected, crossed over, and mutated to find the optimal schedule.
-4. **Visualization**: The script creates visual comparisons between the initial and optimized schedules, demonstrating the improvements made by the GA.
+- **Daily_Genetic_Algorithm/**
+  - `readme.md`: Documentation describing the daily optimization script.
+  - `requirement.text`: Dependencies for running the daily scheduling script.
+  - Python file(s): Script for daily schedule optimization using GA.
 
-### Visualization Examples:
-The script produces stacked bar charts that show how the student's time is allocated each day for different activities. These visualizations help understand the improvements in activity allocation after running the GA.
+- **Weekly_Genetic_Algorithm/**
+  - `readme.md`: Documentation detailing the weekly optimization script.
+  - `requirement.text`: Dependencies for running the weekly scheduling script.
+  - Python file(s): Script for weekly schedule optimization using GA.
 
-### Usage:
-- The script can be executed to generate a weekly schedule that aims to optimize the balance between work, study, rest, and leisure.
-- The resulting schedules provide insights into time management strategies for a busy master's student, helping to achieve an optimal work-life balance while ensuring productivity and well-being.
+## Daily Genetic Algorithm
 
+The `Daily_Genetic_Algorithm` folder contains all scripts and documentation for optimizing daily schedules using Genetic Algorithms (GA), balancing productivity and tension across various activities. The goal is to create a schedule that maximizes productivity while maintaining a healthy work-life balance, where each hour of the day must be optimized for various activities such as work, rest, and study. This level of granularity requires a specific approach that differs from broader weekly planning.
 
-## Daily Scheduling
+## Weekly Genetic Algorithm
+
+The `Weekly_Genetic_Algorithm` folder contains scripts for optimizing a weekly schedule using Genetic Algorithms (GA). The weekly schedule aims to balance work, study, rest, and other activities over the span of a week, considering the unique constraints that occur during weekends and specific weekdays. The optimization must account for specific days when tasks like office work or studying harder subjects should be planned, taking into account fatigue and other constraints.
 
 
-## Time And Space Comparison
+## Time Space Comparison
 
-The purpose of the `time_space_comparison` folder is to compare the execution time and memory usage between different scheduling optimization techniques.
+The purpose of the `Time_Space_Comparison` folder is to compare the execution time and memory usage between different scheduling optimization techniques.
 
 ### Time Comparison: GA vs Brute Force
 - This comparison focuses on evaluating the execution time required to solve the scheduling problem using Genetic Algorithm (GA) versus a brute-force approach.
@@ -57,18 +56,15 @@ The purpose of the `time_space_comparison` folder is to compare the execution ti
 - cGA is designed to use less memory by representing the population probabilistically rather than maintaining an explicit population of individuals, making it suitable for environments with limited memory resources.
 - The comparison results show that cGA significantly reduces memory usage compared to the traditional GA while achieving comparable results in terms of optimization quality.
 
-### Folder Contents
-- All scripts, datasets, and results related to time and space comparisons are available in the `time_space_comparison` folder.
-
 ## Video Presenting
 
-This section contains video presentations that demonstrate the implementation and results of the scheduling optimization techniques discussed in this project.
+The `AI Project - Time Scheduling by Genetic Algorithm.mp4` file contains video presentations that demonstrate the implementation and results of the scheduling optimization techniques discussed in this project.
 - The videos explain how the Genetic Algorithm (GA), Brute Force, and Compact Genetic Algorithm (cGA) approaches are used to solve scheduling problems.
 - Visual demonstrations of the weekly scheduling optimization process, including charts and comparisons, are provided to illustrate the improvements achieved by GA over traditional methods.
 
 ## Presentation
 
-The `presentation` folder contains the slides used to present the project overview, methodology, and results.
+The `Time Scheduling.pptx` file contains the slides used to present the project overview, methodology, and results.
 - The slides cover key aspects such as the problem definition, Genetic Algorithm concepts, implementation details, and performance comparisons.
 - Visual aids and charts are included to help convey the efficiency and effectiveness of GA and cGA in solving scheduling problems.
 
