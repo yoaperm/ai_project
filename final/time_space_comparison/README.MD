@@ -24,9 +24,6 @@ Run the script using Streamlit:
 
 Ensure you have the required Python packages installed:
 
-bash
-
-Copy code
 
 ```$ pip install matplotlib pandas streamlit```
 
