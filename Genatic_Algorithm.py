@@ -19,7 +19,7 @@ NUM_ACTIVITIES = len(ACTIVITIES)
 # User Preferences (weights sum to 1)
 USER_PREFERENCES = {
     'Work': 0.2,
-    'Study': 0.15,
+    'Study': 0.10,
     'Rest/Nap': 0.05,
     'Sleep': 0.25,
     'Exercise': 0.1,
@@ -66,59 +66,76 @@ toolbox = base.Toolbox()
 
 # Attribute generator: Generates a random hour allocation for each activity
 def random_hour_allocation():
-    allocation = np.random.dirichlet(np.ones(NUM_ACTIVITIES)) * HOURS_IN_DAY
+    allocation = np.random.dirichlet(np.ones(NUM_ACTIVITIES)) * (HOURS_IN_DAY - 4)  # Deducting 4 hours for Sleep minimum
     allocation = [round(hour) for hour in allocation]
-    # Adjust the total hours to exactly HOURS_IN_DAY
-    total_hours = sum(allocation)
-    while total_hours != HOURS_IN_DAY:
-        diff = HOURS_IN_DAY - total_hours
+    allocation[ACTIVITIES.index('Sleep')] = random.randint(4, 6)  # Ensure Sleep hours are between 4-6
+    remaining_hours = HOURS_IN_DAY - sum(allocation)
+    while remaining_hours != 0:
         idx = random.randrange(NUM_ACTIVITIES)
-        allocation[idx] = max(0, allocation[idx] + diff)
-        total_hours = sum(allocation)
+        if idx != ACTIVITIES.index('Sleep'):
+            allocation[idx] = max(0, allocation[idx] + remaining_hours)
+        remaining_hours = HOURS_IN_DAY - sum(allocation)
     return allocation
 
 toolbox.register("individual", tools.initIterate, creator.Individual, random_hour_allocation)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
-# Modify the evaluate function to add constraints for essential activities
 def evaluate(individual):
-    # Convert individual to a dict for easier handling
     schedule = dict(zip(ACTIVITIES, individual))
     total_hours = sum(individual)
 
-    # Soft constraints penalties
     penalties = 0
+    productivity = 0
 
-    # Constraint: Total hours should equal HOURS_IN_DAY
+    # Total hours must equal 24
     if total_hours != HOURS_IN_DAY:
         penalties += abs(HOURS_IN_DAY - total_hours) * 10
 
-    # Constraint: Minimum sleep hours
+    # Minimum sleep hours
     if schedule['Sleep'] < MIN_SLEEP_HOURS:
         penalties += (MIN_SLEEP_HOURS - schedule['Sleep']) * 15
 
-    # Constraint: Max combined work and study hours
+    # Work and study combined limit
     if (schedule['Work'] + schedule['Study']) > MAX_WORK_STUDY_HOURS:
         penalties += ((schedule['Work'] + schedule['Study']) - MAX_WORK_STUDY_HOURS) * 10
 
-    # New constraints: Ensure a minimum of 1 hour for Meals
-    if schedule['Meals'] < 1:
-        penalties += (1 - schedule['Meals']) * 20  # Apply a high penalty for missing meal hours
+    # Minimum work hours
+    if schedule['Work'] < 6:
+        penalties += (6 - schedule['Work']) * 20
 
-    # Optional: Minimum hours for Personal Care and Leisure
+    # Minimum study hours
+    if schedule['Study'] < 2:
+        penalties += (2 - schedule['Study']) * 15
+
+    # Meals and personal care minimums
+    if schedule['Meals'] < 1:
+        penalties += (1 - schedule['Meals']) * 20
+
     if schedule['Personal Care'] < 1:
         penalties += (1 - schedule['Personal Care']) * 10
-    if schedule['Leisure'] < 1:
-        penalties += (1 - schedule['Leisure']) * 10
 
-    # Total tension
+    # Leisure and socializing minimum
+    if (schedule['Leisure'] + schedule['Socializing']) < 2:
+        penalties += (2 - (schedule['Leisure'] + schedule['Socializing'])) * 5
+
+    # Missing exercise
+    if schedule['Exercise'] < 2:
+        penalties += (2 - schedule['Exercise']) * 10
+
+    # Reward: Balanced main activities (Work, Study, Sleep <= 70%)
+    if (schedule['Work'] + schedule['Study'] + schedule['Sleep']) / HOURS_IN_DAY <= 0.7:
+        productivity += 10
+
+    # Reward: Work and study combined in optimal range
+    if 8 <= (schedule['Work'] + schedule['Study']) <= 10:
+        productivity += 15
+
+    # Total tension and productivity calculation
     total_tension = sum(schedule[activity] * TENSION_WEIGHTS[activity] for activity in ACTIVITIES)
+    base_productivity = sum(schedule[activity] * PRODUCTIVITY_WEIGHTS[activity] for activity in ACTIVITIES)
 
-    # Productivity score
-    productivity = sum(schedule[activity] * PRODUCTIVITY_WEIGHTS[activity] for activity in ACTIVITIES)
-
-    # Adjust productivity and tension based on penalties
-    adjusted_productivity = productivity - penalties
+    # Adjusted productivity and tension
+    adjusted_productivity = base_productivity + productivity - penalties
     adjusted_tension = total_tension + penalties
 
     return adjusted_productivity, adjusted_tension
@@ -129,7 +146,6 @@ def mutate_individual(individual):
     change = random.choice([-1, 1]) * random.randint(1, 2)
     individual[idx] = max(0, individual[idx] + change)
 
-    # Ensure total hours remain within the limit
     total_hours = sum(individual)
     if total_hours > HOURS_IN_DAY:
         diff = total_hours - HOURS_IN_DAY
@@ -138,7 +154,6 @@ def mutate_individual(individual):
         diff = HOURS_IN_DAY - total_hours
         individual[idx] = individual[idx] + diff
 
-    # Ensure no negative hours
     individual[idx] = max(0, individual[idx])
 
     return individual,
@@ -156,7 +171,6 @@ def main():
     CXPB = 0.7
     MUTPB = 0.2
 
-    # Save an initial schedule for comparison
     initial_individual = population[0]
     initial_schedule = dict(zip(ACTIVITIES, initial_individual))
 
@@ -177,7 +191,6 @@ def main():
 if __name__ == "__main__":
     population, stats, hof, initial_schedule = main()
 
-    # Extract the best individual
     best_individual = tools.selBest(population, k=1)[0]
     best_schedule = dict(zip(ACTIVITIES, best_individual))
 
@@ -189,18 +202,16 @@ if __name__ == "__main__":
     for activity, hours in best_schedule.items():
         print(f"{activity}: {hours} hours")
 
-    # Function to add data labels to bar charts
     def add_data_labels(ax, rects):
         for rect in rects:
             height = rect.get_height()
             if height > 0:
                 ax.annotate(f'{int(height)}',
                             xy=(rect.get_x() + rect.get_width() / 2, height),
-                            xytext=(0, 3),  # 3 points vertical offset
+                            xytext=(0, 3),
                             textcoords="offset points",
                             ha='center', va='bottom')
 
-    # Enhanced bar chart visualization function
     def plot_comparison_bar_chart(initial_schedule, best_schedule, activities):
         x = np.arange(len(activities))
         width = 0.35
@@ -221,7 +232,6 @@ if __name__ == "__main__":
         plt.tight_layout()
         plt.show()
 
-    # Function to plot side-by-side Gantt charts
     def plot_comparison_gantt(initial_schedule, best_schedule, activities):
         fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(18, 6))
 
@@ -246,22 +256,20 @@ if __name__ == "__main__":
             ax.set_xlabel('Time (Hours)')
             ax.set_xlim(0, HOURS_IN_DAY)
             ax.set_title(title)
-            ax.invert_yaxis()  # Invert y-axis to have the first activity at the top
+            ax.invert_yaxis()
             ax.grid(True)
         
         plt.tight_layout()
         plt.show()
 
-    # Call the enhanced visualization functions
     plot_comparison_bar_chart(initial_schedule, best_schedule, ACTIVITIES)
     plot_comparison_gantt(initial_schedule, best_schedule, ACTIVITIES)
 
-    # Pareto Front Visualization
     pareto_points = np.array([ind.fitness.values for ind in hof])
     plt.figure(figsize=(10, 6))
     plt.scatter(
-        pareto_points[:, 1],  # Tension on X-axis
-        pareto_points[:, 0],  # Productivity on Y-axis
+        pareto_points[:, 1],
+        pareto_points[:, 0],
         c='blue',
         label='Pareto Front'
     )
@@ -272,4 +280,3 @@ if __name__ == "__main__":
     plt.grid(True)
     plt.tight_layout()
     plt.show()
-

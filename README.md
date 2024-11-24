@@ -36,6 +36,40 @@ A comprehensive set of daily activities:
 - **CXPB**: Crossover probability (`0.7`).
 - **MUTPB**: Mutation probability (`0.2`).
 
+## Enhanced Logic
+
+### New Constraints and Rewards
+
+1. **Minimum Work and Study Hours**:
+   - Ensures a realistic balance for working professionals pursuing higher studies.
+   - **Work** must have at least 6 hours per day:
+     - Penalty: `+20` per missing hour below 6.
+   - **Study** must have at least 2 hours per day:
+     - Penalty: `+15` per missing hour below 2.
+
+2. **Balanced Life**:
+   - Rewards for keeping **Work + Study + Sleep** within 70% of the total daily hours:
+     - Reward: `+10` to productivity.
+
+3. **Leisure and Socializing Minimum**:
+   - Ensures a healthy work-life balance.
+   - Combined **Leisure + Socializing** must be at least 2 hours:
+     - Penalty: `+5` per missing hour below 2.
+
+4. **Exercise Requirement**:
+   - Encourages physical activity for overall well-being.
+   - **Exercise** must have at least 2 hours per week:
+     - Penalty: `+10` per missing hour below 2.
+
+5. **Meals and Personal Care**:
+   - Ensures basic necessities are not neglected:
+     - **Meals**: Must have at least 1 hour/day:
+       - Penalty: `+20` per missing hour.
+     - **Personal Care**: Must have at least 1 hour/day:
+       - Penalty: `+10` per missing hour.
+
+---
+
 ## Visual Explanation with Mermaid Diagrams
 
 ### 1. Comparison of Initial and Best Schedules
@@ -101,10 +135,14 @@ graph TD
 - **Y-axis**: Productivity (higher is better).
 - **Points**: Different solutions on the Pareto front are highlighted.
 
+---
+
 ## Insights from the Visualizations
-- **Balanced Life**: The constraints ensure essential activities, such as meals and sleep, are included in the schedule.
-- **Flexible Framework**: Adjust weights and constraints for different lifestyle needs.
-- **Customization**: Tailor the schedules for personal preferences (e.g., more leisure time, focus on work).
+- **Balanced Life**: The new constraints ensure essential activities, such as meals, exercise, and leisure, are included in the schedule.
+- **Flexible Framework**: The enhancements allow customization for specific lifestyle needs, such as balancing work and study.
+- **Improved Realism**: Added penalties and rewards provide realistic constraints for professionals and students.
+
+---
 
 ## How to Use the Visualizations
 
@@ -117,10 +155,14 @@ Gantt charts make it easy to see how the schedule is structured and where the im
 ### 3. Evaluate Trade-offs with the Pareto Front
 Use the Pareto front plot to identify the best balance between productivity and tension and understand the limitations of the optimization.
 
+---
+
 ## Potential Enhancements
 - **Interactive Inputs**: Allow users to adjust preferences and constraints dynamically.
 - **Detailed Reporting**: Generate reports showing how the schedule was adjusted and the rationale behind each change.
 - **Fixed Time Blocks**: Implement fixed time blocks for immovable activities like classes or meetings.
 
+---
+
 ## Conclusion
-This project offers an innovative solution for optimizing daily schedules using Genetic Algorithms. The blend of data-driven insights and visualizations makes it easy to interpret the scheduling decisions, ensuring a productive and balanced daily routine.
+This project offers an innovative solution for optimizing daily schedules using Genetic Algorithms. The enhanced logic adds more realistic constraints and rewards, ensuring a productive and balanced daily routine tailored to working professionals and students.
