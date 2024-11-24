@@ -6,7 +6,9 @@ This repository contains scripts, documentation, and notebooks for implementing 
 - [Project Overview](#project-overview)
 - [Weekly Scheduling](#weekly-scheduling)
 - [Daily Scheduling](#daily-scheduling)
-- [Time and Space Comparison](#time-space-comparison])
+- [Time And Space Comparison](#time-and-space-comparison])
+- [Video Presenting](#video-presenting])
+- [Presentation](#presentation])
 
 ## Project Overview
 This project aims to explore different GA techniques, including traditional GA and compact GA, for optimizing scheduling problems, specifically a weekly timetable for a master's degree student. The goal is to compare their performance in terms of time consumption, space usage, and fitness improvement.
@@ -57,4 +59,16 @@ The purpose of the `time_space_comparison` folder is to compare the execution ti
 
 ### Folder Contents
 - All scripts, datasets, and results related to time and space comparisons are available in the `time_space_comparison` folder.
+
+## Video Presenting
+
+This section contains video presentations that demonstrate the implementation and results of the scheduling optimization techniques discussed in this project.
+- The videos explain how the Genetic Algorithm (GA), Brute Force, and Compact Genetic Algorithm (cGA) approaches are used to solve scheduling problems.
+- Visual demonstrations of the weekly scheduling optimization process, including charts and comparisons, are provided to illustrate the improvements achieved by GA over traditional methods.
+
+## Presentation
+
+The `presentation` folder contains the slides used to present the project overview, methodology, and results.
+- The slides cover key aspects such as the problem definition, Genetic Algorithm concepts, implementation details, and performance comparisons.
+- Visual aids and charts are included to help convey the efficiency and effectiveness of GA and cGA in solving scheduling problems.
 
